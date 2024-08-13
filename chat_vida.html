@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat VidaPrev</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap&family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Incluindo os mesmos estilos fornecidos */
+        :root {
+            --color-primary: #003366;
+            --color-primary-light: #0055a5;
+            --color-secondary: #e0e0e0;
+            --color-accent: #ff4081;
+            --color-background-light: #f5f7fa;
+            --color-background-dark: #121212;
+            --color-text-light: #ffffff;
+            --color-text-dark: #000000;
+            --font-body: 'Montserrat', sans-serif;
+            --font-heading: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-background-dark);
+            color: var(--color-text-light);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
+        }
+
+        body.light-mode {
+            background-color: var(--color-background-light);
+            color: var(--color-text-dark);
+        }
+
+        .sidebar {
+            width: 25%;
+            background-color: var(--color-primary);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.light-mode .sidebar {
+            background-color: var(--color-secondary);
+            color: var(--color-text-dark);
+        }
+
+        .sidebar header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar header img {
+            height: 60px;
+            margin-right: 10px;
+            transition: filter 0.3s;
+        }
+
+        body.light-mode .sidebar header img {
+            filter: invert(1);
+        }
+
+        .sidebar header h1 {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .sidebar .toggle-mode {
+            background: none;
+            border: none;
+            color: var(--color-text-light);
+            font-size: 24px;
+            margin-left: auto;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        body.light-mode .sidebar .toggle-mode {
+            color: var(--color-primary);
+        }
+
+        .sidebar .toggle-mode:hover {
+            color: var(--color-accent);
+        }
+
+        .sidebar .contact-section {
+            margin-top: 20px;
+        }
+
+        .sidebar .contact-section h2 {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sidebar .contact-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .sidebar .contact-list li {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: var(--color-primary-light);
+            color: var(--color-text-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.light-mode .sidebar .contact-list li {
+            background-color: var(--color-secondary);
+            color: var(--color-text-dark);
+        }
+
+        .sidebar .contact-list li a {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .sidebar .contact-list li a i {
+            font-size: 32px;
+        }
+
+        .sidebar .contact-list li .address-link {
+            text-decoration: none;
+            color: inherit;
+            text-align: center;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--color-background-dark);
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-y: auto;
+        }
+
+        body.light-mode .main-content {
+            background-color: var(--color-background-light);
+            color: var(--color-text-dark);
+        }
+
+        .main-content .header-main {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .main-content .header-main h2 {
+            font-family: var(--font-heading);
+            font-size: 36px;
+            margin: 0;
+            text-align: center;
+        }
+
+        .main-content .header-main img {
+            height: 60px;
+            margin-right: 10px;
+            transition: filter 0.3s;
+        }
+
+        body.light-mode .main-content .header-main img {
+            filter: invert(1);
+        }
+
+        .main-content .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: var(--color-background-light);
+            border-radius: 16px;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+            border: 1px solid var(--color-primary);
+        }
+
+        body.light-mode .main-content .messages {
+            background-color: var(--color-secondary);
+            border: 1px solid var(--color-primary);
+        }
+
+        .main-content .messages .message {
+            margin-bottom: 15px;
+            display: flex;
+        }
+
+        .main-content .messages .message.sent {
+            justify-content: flex-end;
+        }
+
+        .main-content .messages .message.received {
+            justify-content: flex-start;
+        }
+
+        .main-content .messages .message .message-content {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .main-content .messages .message.sent .message-content {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            border-radius: 16px 16px 0 16px;
+        }
+
+        .main-content .messages .message.received .message-content {
+            background-color: var(--color-secondary);
+            color: var(--color-text-dark);
+            border-radius: 16px 16px 16px 0;
+        }
+
+        body.light-mode .main-content .messages .message.received .message-content {
+            background-color: var(--color-primary-light);
+            color: var(--color-text-dark);
+        }
+
+        .main-content .input-container {
+            display: flex;
+            padding: 15px;
+            background-color: var(--color-secondary);
+            border-radius: 16px;
+            border-top: 1px solid #ddd;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.light-mode .main-content .input-container {
+            background-color: var(--color-primary-light);
+            border: 1px solid var(--color-primary);
+        }
+
+        .main-content .input-container .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 16px;
+            background-color: #fff;
+            color: var(--color-text-dark);
+            margin-right: 10px;
+        }
+
+        .main-content .input-container .chat-input:focus {
+            outline: none;
+            box-shadow: 0 0 4px var(--color-primary);
+        }
+
+        .main-content .input-container .send-button {
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+
+        .main-content .input-container .send-button:hover {
+            background-color: var(--color-primary-light);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-content .input-container .send-button:active {
+            background-color: #002d62;
+            transform: scale(0.95);
+        }
+
+        .assistant-selection-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .assistant-selection-container button {
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: var(--color-primary);
+            color: var(--color-text-light);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+        }
+
+        .assistant-selection-container button:hover {
+            background-color: var(--color-primary-light);
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .assistant-selection-container button:active {
+            background-color: #002d62;
+            transform: scale(0.95);
+        }
+
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="sidebar">
+        <header>
+            <img src="https://www.agros.org.br/images/logo.svg" alt="Logo">
+            <button class="toggle-mode" onclick="toggleDarkMode()" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
+        </header>
+        <div class="contact-section">
+            <h2>Fale com o Agros</h2>
+            <ul class="contact-list">
+                <li>
+                    <a href="mailto:contatos@agros.org.br">
+                        <i class="far fa-envelope"></i>
+                        <span>Email</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/553138901300">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>WhatsApp</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.instagram.com/agrosprevsaude" target="_blank">
+                        <i class="fab fa-instagram"></i>
+                        <span>Instagram</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="address-link" href="https://www.google.com/maps/search/?api=1&query=Av.+Purdue+s%2Fn%2C+Campus+UFV+-+Viçosa+MG+CEP%3A+36570-900" target="_blank">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Endereço</span>
+                        <p>Av. Purdue s/n, Campus UFV - Viçosa MG CEP: 36570-900</p>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="header-main">
+            <img src="https://www.agros.org.br/images/logo.svg" alt="Logo">
+            <h2>Tira-dúvidas VidaPrev</h2>
+        </div>
+        <div class="messages" id="messages" role="log" aria-live="polite">
+            <div class="message received">
+                <div class="message-content">
+                    <p>Bem-vindo ao Tira-dúvidas VidaPrev! Como podemos ajudá-lo hoje?</p>
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <input type="text" id="question" class="chat-input" placeholder="Digite uma mensagem..." aria-label="Digite uma mensagem">
+            <button class="send-button" onclick="sendMessage()" aria-label="Enviar mensagem">Enviar</button>
+            <button class="send-button" onclick="resetAssistant()" aria-label="Trocar Assistente">Trocar Assistente</button>
+        </div>
+    </div>
+    <script>
+        let assistantId = 'asst_Dx0w1YYC03MU1a7mLiJiP2lj';
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            const icon = document.querySelector('.toggle-mode i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+
+        async function sendMessage() {
+            const question = document.getElementById('question').value;
+            const messages = document.getElementById('messages');
+
+            if (question.trim() === "") return;
+
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('message', 'sent');
+            userMessage.innerHTML = `<div class="message-content">${question}</div>`;
+            messages.appendChild(userMessage);
+
+            document.getElementById('question').value = '';
+            const loadingMessage = document.createElement('div');
+            loadingMessage.classList.add('message', 'received', 'loading');
+            loadingMessage.innerHTML = `<div class="message-content">...</div>`;
+            messages.appendChild(loadingMessage);
+            messages.scrollTop = messages.scrollHeight;
+
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ assistant_id: assistantId, message: question })
+            });
+
+            const data = await response.json();
+            const botMessage = document.createElement('div');
+            botMessage.classList.add('message', 'received');
+            botMessage.innerHTML = `<div class="message-content">${data.response}</div>`;
+            messages.appendChild(botMessage);
+            messages.scrollTop = messages.scrollHeight;
+
+            if (loadingMessage.parentNode) {
+                loadingMessage.parentNode.removeChild(loadingMessage);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('question').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        });
+
+        function resetAssistant() {
+            window.location.href = '/';
+        }
+
+        window.addEventListener('unload', function() {
+            navigator.sendBeacon('/shutdown');
+        });
+    </script>
+</body>
+</html>
