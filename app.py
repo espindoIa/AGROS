@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
 from openai import OpenAI, AssistantEventHandler
 from openai.types.beta.threads import TextDelta
@@ -36,14 +35,10 @@ class MyEventHandler(AssistantEventHandler):
         message_content = re.sub(r'【\d+:\d+†source】', '', message_content)
         
         # Formatação de subtítulos, negrito, sublinhado e listas
-        message_content = re.sub(r'(
-)([^
-]+)(
-===+)', r'<h2></h2>', message_content)
-        message_content = re.sub(r'\*\*(.*?)\*\*', r'<strong></strong>', message_content)
-        message_content = re.sub(r'__(.*?)__', r'<u></u>', message_content)
-        message_content = message_content.replace('
-', '<br>')
+        message_content = re.sub(r'(\n)([^\n]+)(\n===+)', r'\1<h2>\2</h2>\1', message_content)
+        message_content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', message_content)
+        message_content = re.sub(r'__(.*?)__', r'<u>\1</u>', message_content)
+        message_content = message_content.replace('\n', '<br>')
         return message_content
 
     def get_message(self):
