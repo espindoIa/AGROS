@@ -47,7 +47,7 @@ class MyEventHandler(AssistantEventHandler):
     def get_message(self):
         return self.message_content
 
-def create_thread_and_get_response(user_message, assistant_id, retries=3, delay=5):
+def create_thread_and_get_response(user_message, assistant_id, retries=3, delay=10):
     global global_thread_id
 
     attempt = 1
@@ -85,6 +85,8 @@ def create_thread_and_get_response(user_message, assistant_id, retries=3, delay=
 
         except Exception as e:
             print(f"Attempt {attempt} failed with error: {e}")
+            if attempt == retries:
+                global_thread_id = None  # Resetar a thread para evitar problemas futuros
             attempt += 1
             time.sleep(delay)
     raise RuntimeError("Failed to get response after 3 attempts")
