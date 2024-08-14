@@ -14,6 +14,9 @@ app = Flask(__name__)
 api_key = "sk-proj-UNjkmlvR3uT77qRYWDUlT3BlbkFJCGYlU4n5K6NoQU26FhS2"
 client = OpenAI(api_key=api_key)
 
+# Variável global para armazenar o ID da thread
+global_thread_id = None
+
 # Definindo a classe EventHandler para processar eventos do streaming
 class MyEventHandler(AssistantEventHandler):
     def __init__(self):
@@ -45,20 +48,38 @@ class MyEventHandler(AssistantEventHandler):
         return self.message_content
 
 def create_thread_and_get_response(user_message, assistant_id, retries=3, delay=5):
-    thread = {
-        "messages": [{"role": "user", "content": user_message}]
-    }
+    global global_thread_id
 
     attempt = 1
     while attempt <= retries:
         try:
             event_handler = MyEventHandler()
-            with client.beta.threads.create_and_run_stream(
-                assistant_id=assistant_id,
-                thread=thread,
-                event_handler=event_handler,
-            ) as stream:
-                stream.until_done()
+            if global_thread_id is None:
+                # Cria uma nova thread
+                thread = {
+                    "messages": [{"role": "user", "content": user_message}]
+                }
+                with client.beta.threads.create_and_run_stream(
+                    assistant_id=assistant_id,
+                    thread=thread,
+                    event_handler=event_handler,
+                ) as stream:
+                    stream.until_done()
+                    # Armazena o ID da thread criada
+                    global_thread_id = stream.thread_id
+            else:
+                # Adiciona uma nova mensagem à thread existente
+                client.beta.threads.messages.create(
+                    thread_id=global_thread_id,
+                    message={"role": "user", "content": user_message}
+                )
+                # Inicia o streaming para processar a nova mensagem
+                with client.beta.threads.runs.stream(
+                    assistant_id=assistant_id,
+                    thread_id=global_thread_id,
+                    event_handler=event_handler,
+                ) as stream:
+                    stream.until_done()
 
             return event_handler.get_message()
 
