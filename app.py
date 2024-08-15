@@ -14,6 +14,9 @@ app = Flask(__name__)
 api_key = "sk-proj-UNjkmlvR3uT77qRYWDUlT3BlbkFJCGYlU4n5K6NoQU26FhS2"
 client = OpenAI(api_key=api_key)
 
+# Armazenar o ID da thread para reutilização
+thread_id_store = {}
+
 # Definindo a classe EventHandler para processar eventos do streaming
 class MyEventHandler(AssistantEventHandler):
     def __init__(self):
@@ -44,18 +47,29 @@ class MyEventHandler(AssistantEventHandler):
     def get_message(self):
         return self.message_content
 
-def create_thread_and_get_response(user_message, assistant_id, retries=3, delay=5):
-    thread = {
-        "messages": [{"role": "user", "content": user_message}]
-    }
+def get_or_create_thread(assistant_id):
+    if assistant_id not in thread_id_store:
+        # Criar uma nova thread se não existir
+        thread = client.beta.threads.create()
+        thread_id_store[assistant_id] = thread.id
+    return thread_id_store[assistant_id]
+
+def create_message_and_get_response(user_message, assistant_id, retries=3, delay=5):
+    thread_id = get_or_create_thread(assistant_id)
+    
+    message = client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=user_message
+    )
 
     attempt = 1
     while attempt <= retries:
         try:
             event_handler = MyEventHandler()
-            with client.beta.threads.create_and_run_stream(
+            with client.beta.threads.runs.stream(
+                thread_id=thread_id,
                 assistant_id=assistant_id,
-                thread=thread,
                 event_handler=event_handler,
             ) as stream:
                 stream.until_done()
@@ -87,7 +101,7 @@ def send_message():
     data = request.json
     assistant_id = data['assistant_id']
     user_message = data['message']
-    response = create_thread_and_get_response(user_message, assistant_id)
+    response = create_message_and_get_response(user_message, assistant_id)
     return jsonify({'response': response})
 
 def open_browser():
