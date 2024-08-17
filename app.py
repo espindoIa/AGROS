@@ -16,16 +16,6 @@ ifnot api_key:
     raise ValueError("OPENAI_API_KEY is not set in the environment variables")
 client = OpenAI(api_key=api_key)
 
-# Configure Celery to use Redis URL from environment variable
-redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-
-# Celery configuration (assuming it's part of the application)
-celery_app = Celery(
-    'chatbot',
-    broker=redis_url,
-    backend=redis_url
-)
-
 # Rest of your existing code...# Armazenar o ID da thread para reutilização
 thread_id_store = {}
 
@@ -64,7 +54,7 @@ defcreate_message_and_get_response(user_message, assistant_id, retries=3, delay=
         content=user_message
     )
 
-    attempt = 1while attempt <= retries:
+    attempt = while attempt <= retries:
         try:
             event_handler = MyEventHandler()
             with client.beta.threads.runs.stream(
