@@ -1,113 +1,67 @@
-from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
+import os
+import logging
+from flask import Flask, request, jsonify
 from openai import OpenAI, AssistantEventHandler
 from openai.types.beta.threads import TextDelta
 from typing_extensions import override
 import re
-import webbrowser
-import threading
-import time
-import os
+import asyncio
+from functools import lru_cache
 
 app = Flask(__name__)
 
-# Configurar a chave da API do OpenAI de forma segura
-api_key = "sk-proj-UNjkmlvR3uT77qRYWDUlT3BlbkFJCGYlU4n5K6NoQU26FhS2"
+# Load API key from environment variable
+api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
-# Armazenar o ID da thread para reutilização
+# Thread ID store
 thread_id_store = {}
 
-# Definindo a classe EventHandler para processar eventos do streaming
-class MyEventHandler(AssistantEventHandler):
-    def __init__(self):
-        super().__init__()
-        self.message_content = ""
+# Logging configuration
+logging.basicConfig(level=logging.INFO)
 
-    @override
-    def on_text_delta(self, delta: TextDelta, snapshot):
+# Thread managementdefget_or_create_thread_id(user_id):
+    if user_id notin thread_id_store:
+        thread_id_store[user_id] = client.create_thread()  # Placeholder for thread creationreturn thread_id_store[user_id]
+
+# Event handler class with async processingclassMyEventHandler(AssistantEventHandler):
+    def__init__(self):
+        super().__init__()
+        self.message_content = ""    @overrideasyncdefon_text_delta(self, delta: TextDelta, snapshot):
         self.message_content += delta.value
 
-    @override
-    def on_message_done(self, message) -> None:
-        # Finaliza a mensagem quando o processamento estiver completo
+    @overrideasyncdefon_message_done(self, message) -> None:
         self.message_content = self.format_message(self.message_content)
 
-    def format_message(self, message_content: str) -> str:
-        # Limpa anotações e referências
+    defformat_message(self, message_content: str) -> str:
         message_content = re.sub(r'\[\d+\]', '', message_content)
         message_content = re.sub(r'【\d+:\d+†source】', '', message_content)
-        
-        # Formatação de subtítulos, negrito, sublinhado e listas
         message_content = re.sub(r'(\n)([^\n]+)(\n===+)', r'\1<h2>\2</h2>\1', message_content)
-        message_content = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', message_content)
-        message_content = re.sub(r'__(.*?)__', r'<u>\1</u>', message_content)
-        message_content = message_content.replace('\n', '<br>')
         return message_content
 
-    def get_message(self):
-        return self.message_content
-
-def get_or_create_thread(assistant_id):
-    if assistant_id not in thread_id_store:
-        # Criar uma nova thread se não existir
-        thread = client.beta.threads.create()
-        thread_id_store[assistant_id] = thread.id
-    return thread_id_store[assistant_id]
-
-def create_message_and_get_response(user_message, assistant_id, retries=3, delay=5):
-    thread_id = get_or_create_thread(assistant_id)
-    
-    message = client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=user_message
-    )
-
-    attempt = 1
-    while attempt <= retries:
-        try:
-            event_handler = MyEventHandler()
-            with client.beta.threads.runs.stream(
-                thread_id=thread_id,
-                assistant_id=assistant_id,
-                event_handler=event_handler,
-            ) as stream:
-                stream.until_done()
-
-            return event_handler.get_message()
-
-        except Exception as e:
-            print(f"Attempt {attempt} failed with error: {e}")
-            attempt += 1
-            time.sleep(delay)
-    raise RuntimeError("Failed to get response after 3 attempts")
-
-@app.route('/')
-def index():
-    return send_from_directory('', 'index.html')
-
-@app.route('/chat')
-def chat():
-    assistant = request.args.get('assistant')
-    if assistant == 'vida':
-        return send_from_directory('', 'chat_vida.html')
-    elif assistant == 'invest':
-        return send_from_directory('', 'chat_invest.html')
-    else:
-        return redirect(url_for('index'))
-
-@app.route('/send_message', methods=['POST'])
-def send_message():
+@app.route('/chat', methods=['POST'])asyncdefchat():
     data = request.json
-    assistant_id = data['assistant_id']
-    user_message = data['message']
-    response = create_message_and_get_response(user_message, assistant_id)
-    return jsonify({'response': response})
+    user_id = data.get('user_id')
+    message = data.get('message')
+    
+    thread_id = get_or_create_thread_id(user_id)
+    event_handler = MyEventHandler()
+    
+    try:
+        response = await client.stream_message(thread_id=thread_id, message=message, event_handler=event_handler)
+        return jsonify({"response": event_handler.message_content})
+    except Exception as e:
+        logging.error(f"Error processing message: {e}")
+        return jsonify({"error": "An error occurred processing your request"}), 500@lru_cache(maxsize=128)defcached_response(user_id):
+    return thread_id_store.get(user_id, None)
 
-def open_browser():
-    webbrowser.open_new(f'http://0.0.0.0:{os.environ.get("PORT", 5000)}/')
+@app.route('/')defindex():
+    return"Welcome to the Conversational AI Application!"@app.after_requestdefapply_security_headers(response):
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"return response
 
-if __name__ == '__main__':
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        threading.Timer(1, open_browser).start()
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+if __name__ == "__main__":
+    # Render typically uses the PORT environment variable
+    port = int(os.getenv("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
