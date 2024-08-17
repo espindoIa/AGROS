@@ -54,7 +54,7 @@ defcreate_message_and_get_response(user_message, assistant_id, retries=3, delay=
         content=user_message
     )
 
-    attempt = while attempt <= retries:
+    attempt = 1 while attempt <= retries:
         try:
             event_handler = MyEventHandler()
             with client.beta.threads.runs.stream(
