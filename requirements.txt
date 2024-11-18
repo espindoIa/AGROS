@@ -1,5 +1,15 @@
-flask>=2.3.2
-openai>=0.27.0
-typing-extensions>=4.7.1
-celery
-redis
+# Framework web
+Flask>=3.0.0
+
+# Cliente OpenAI
+openai
+
+# Tipos e extensões de tipagem
+typing-extensions>=4.9.0
+
+# Utilidades e ferramentas assíncronas
+aiohttp>=3.9.0
+asyncio>=3.4.3
+
+# Logging e utilitários
+python-dotenv>=1.0.0
